@@ -1,7 +1,7 @@
 import * as React from "react";
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, Toolbar, Typography, IconButton, Tooltip } from "@mui/material";
+import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, Toolbar, Typography, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { alpha } from "@mui/material/styles";
+import DownloadIcon from "@mui/icons-material/Download";
 import PropTypes from "prop-types";
 import { visuallyHidden } from "@mui/utils";
 import { useState, useEffect } from "react";
@@ -74,20 +74,30 @@ EnhancedTableHead.propTypes = {
   orderBy: PropTypes.string.isRequired,
 };
 
-function EnhancedTableToolbar() {
+function EnhancedTableToolbar({ downloadCSV }) {
   return (
     <Toolbar>
       <Typography sx={{ flex: "1 1 100%" }} variant="h6" id="tableTitle" component="div">
         Books
       </Typography>
-      <Tooltip title="Filter list">
-        <IconButton>
-          <FilterListIcon />
+      <Tooltip title="Download CSV">
+        <IconButton onClick={downloadCSV}>
+          <p style={{ fontSize: "17px", fontWeight: "700" }}>Export as CSV: &nbsp;</p>
+          <DownloadIcon />
         </IconButton>
+      </Tooltip>
+      <Tooltip title="Filter list">
+        {/* <IconButton>
+          <FilterListIcon />
+        </IconButton> */}
       </Tooltip>
     </Toolbar>
   );
 }
+
+EnhancedTableToolbar.propTypes = {
+  downloadCSV: PropTypes.func.isRequired,
+};
 
 export default function EnhancedTable({ searchQuery }) {
   const [order, setOrder] = React.useState("asc");
@@ -97,53 +107,6 @@ export default function EnhancedTable({ searchQuery }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  //   useEffect(() => {
-  //     const fetchData = async () => {
-  //       try {
-  //         const response = await fetch("https://openlibrary.org/search.json?q=the+lord+of+the+rings");
-
-  //         if (!response.ok) {
-  //           throw new Error("Network response was not ok");
-  //         }
-  //         const data = await response.json();
-  //         const books = data.docs;
-  //         console.log("data: ", data);
-  //         console.log(books[0]);
-
-  //         // const authorRes = await fetch(`https://openlibrary.org/search/authors.json?q=${books[0].author_name}`);
-  //         // const authorRes = await fetch(`https://openlibrary.org/authors/${books[0].author_key[0]}.json`);
-  //         // const authorData = await authorRes.json();
-  //         // console.log("authorRes: ", authorData);
-
-  //         books.forEach((book) => {
-  //           fetchAuthorData(book.author_name);
-  //         });
-
-  //         setRows(books);
-  //         setLoading(false);
-  //       } catch (error) {
-  //         setError(error);
-  //         setLoading(false);
-  //       }
-  //     };
-
-  //     fetchData();
-  //   }, []);
-
-  //   const fetchAuthorData = async (authorName) => {
-  //     try {
-  //       const authorRes = await fetch(`https://openlibrary.org/search/authors.json?q=${authorName}`);
-  //       const authorData = await authorRes.json();
-  //       console.log("authorRes: ", authorData);
-  //       const birthDate = authorData.docs[0].birth_date;
-  //       const topWork = authorData.docs[0].top_work;
-  //       console.log("birthDate: ", birthDate);
-  //       console.log("topWork: ", topWork);
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,8 +118,6 @@ export default function EnhancedTable({ searchQuery }) {
         }
         const data = await response.json();
         const books = data.docs;
-        // console.log("data: ", data);
-        // console.log(books[0]);
 
         const updatedBooks = await Promise.all(books.map((book) => fetchAuthorData(book)));
         setRows(updatedBooks);
@@ -174,16 +135,12 @@ export default function EnhancedTable({ searchQuery }) {
     try {
       const authorRes = await fetch(`https://openlibrary.org/search/authors.json?q=${book.author_name}`);
       const authorData = await authorRes.json();
-      //   console.log("authorRes: ", authorData);
       const birthDate = authorData.docs[0].birth_date;
       const topWork = authorData.docs[0].top_work;
-      //   console.log("birthDate: ", birthDate);
-      //   console.log("topWork: ", topWork);
 
       return { ...book, author_birth_date: birthDate, author_top_work: topWork };
     } catch (error) {
       console.error(error);
-      // Return the original book object if fetching author data fails
       return book;
     }
   };
@@ -203,40 +160,56 @@ export default function EnhancedTable({ searchQuery }) {
     setPage(0);
   };
 
-  //   console.log("searchquery: ", searchQuery);
+  const downloadCSV = () => {
+    const csvRows = [headCells.map((cell) => cell.label).join(","), ...rows.map((row) => headCells.map((cell) => row[cell.id]).join(","))].join("\n");
+
+    const blob = new Blob([csvRows], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "table_data.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   const filteredRows = searchQuery ? rows.filter((row) => Array.isArray(row.author_name) && typeof row.author_name[0] === "string" && row.author_name[0].toLowerCase().includes(searchQuery.toLowerCase())) : rows;
-
-  console.log("filtered: ", filteredRows);
 
   const sortedRows = stableSort(filteredRows, getComparator(order, orderBy));
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <EnhancedTableToolbar />
-        <TableContainer sx={{ maxHeight: 440 }}>
-          <Table stickyHeader aria-labelledby="tableTitle" size="medium">
-            <EnhancedTableHead order={order} orderBy={orderBy} onRequestSort={handleRequestSort} />
-            <TableBody>
-              {sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
-                return (
-                  <TableRow hover tabIndex={-1} key={row.id}>
-                    <TableCell align="right">{row.ratings_average}</TableCell>
-                    <TableCell align="left">{row.author_name}</TableCell>
-                    <TableCell align="left">{row.title}</TableCell>
-                    <TableCell align="right">{row.first_publish_year}</TableCell>
-                    <TableCell align="left">{row.subject?.slice(0, 2).join(", ")}</TableCell>
-                    <TableCell align="left">{row.author_birth_date}</TableCell>
-                    <TableCell align="left">{row.author_top_work}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination rowsPerPageOptions={[10, 25, 50, 100]} component="div" count={sortedRows.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
-      </Paper>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Paper sx={{ width: "100%", mb: 2 }}>
+          <EnhancedTableToolbar downloadCSV={downloadCSV} />
+          <TableContainer sx={{ maxHeight: 440 }}>
+            <Table stickyHeader aria-labelledby="tableTitle" size="medium">
+              <EnhancedTableHead order={order} orderBy={orderBy} onRequestSort={handleRequestSort} />
+              <TableBody>
+                {sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
+                  return (
+                    <TableRow hover tabIndex={-1} key={row.id}>
+                      <TableCell align="right">{row.ratings_average}</TableCell>
+                      <TableCell align="left">{row.author_name?.join(", ")}</TableCell>
+                      <TableCell align="left">{row.title}</TableCell>
+                      <TableCell align="right">{row.first_publish_year}</TableCell>
+                      <TableCell align="left">{row.subject?.slice(0, 2).join(", ")}</TableCell>
+                      <TableCell align="left">{row.author_birth_date}</TableCell>
+                      <TableCell align="left">{row.author_top_work}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination rowsPerPageOptions={[10, 25, 50, 100]} component="div" count={sortedRows.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
+        </Paper>
+      )}
     </Box>
   );
 }
