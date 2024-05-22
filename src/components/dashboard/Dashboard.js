@@ -35,8 +35,10 @@
 
 import React, { useState } from "react";
 import Table from "../table/Table";
-import { AppBar, Toolbar, Typography, Box, TextField, Avatar, Container } from "@mui/material";
+import { AppBar, Toolbar, Typography, Box, TextField, Avatar, Container, Button } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { FirebaseContext } from "../../context/Firebase";
+import { useContext } from "react";
 
 const theme = createTheme({
   palette: {
@@ -48,6 +50,12 @@ const theme = createTheme({
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { logOut } = useContext(FirebaseContext);
+
+  const handleSignOut = async () => {
+    await logOut();
+    console.log("Sign Out Successfully");
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -57,6 +65,20 @@ const Dashboard = () => {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Dashboard
             </Typography>
+            {/* <Button color="inherit" onClick={handleSignOut} > */}
+            <Button
+              color="inherit"
+              onClick={handleSignOut}
+              sx={{
+                marginRight: 2,
+                // backgroundColor: isLoggingOut ? "rgba(255, 255, 255, 0.5)" : "transparent",
+                // "&:hover": {
+                //   backgroundColor: "rgba(255, 255, 255, 0.8)",
+                // },
+              }}
+            >
+              Logout
+            </Button>
             <TextField variant="outlined" size="small" placeholder="Search by author" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} sx={{ backgroundColor: "white", borderRadius: 1, marginRight: 2 }} />
             <Avatar alt="User Avatar" src="/static/images/avatar/1.jpg" />
             <Typography variant="body1" component="div" sx={{ marginLeft: 2 }}>
