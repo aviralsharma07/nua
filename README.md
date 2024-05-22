@@ -1,5 +1,7 @@
 # Book Dashboard Application
 
+Live Project Link: [Book Dashboard](https://nua-avi.netlify.app/)
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
@@ -27,10 +29,6 @@
 ![Dashboard](assets/dashboardpage.png)
 ![Searching](assets/searchingpage.png)
 ![Authentication](assets/loginpage.png)
-
-## Usage
-
-[Provide instructions on how to use or interact with the application]
 
 ## Installation
 
