@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TableSortLabel, Toolbar, Typography, IconButton, Tooltip, CircularProgress } from "@mui/material";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import DownloadIcon from "@mui/icons-material/Download";
 import PropTypes from "prop-types";
 import { visuallyHidden } from "@mui/utils";
@@ -86,11 +85,7 @@ function EnhancedTableToolbar({ downloadCSV }) {
           <DownloadIcon />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Filter list">
-        {/* <IconButton>
-          <FilterListIcon />
-        </IconButton> */}
-      </Tooltip>
+      <Tooltip title="Filter list"></Tooltip>
     </Toolbar>
   );
 }
@@ -106,7 +101,6 @@ export default function EnhancedTable({ searchQuery }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,7 +117,7 @@ export default function EnhancedTable({ searchQuery }) {
         setRows(updatedBooks);
         setLoading(false);
       } catch (error) {
-        setError(error);
+        console.log(error);
         setLoading(false);
       }
     };
